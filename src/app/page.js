@@ -1,101 +1,161 @@
-import Image from "next/image";
+"use client";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import UploadPage from "./component/Upload";
+import * as XLSX from "xlsx"; // Import xlsx library
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    const [data, setData] = useState([]);
+    const [headers, setHeaders] = useState([]);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    /** 
+     * Fetch Data from Backend
+     */
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get("/api/research");
+
+            if (response.status !== 200 || !response.data) {
+                throw new Error("No data received from the backend.");
+            }
+
+            const rawData = response.data;
+            console.log("✅ Data Received from Backend:", rawData);
+
+            if (rawData.length > 0) {
+                // Filter out invalid headers (`_id`, `__v`, `__EMPTY`)
+                const validHeaders = Object.keys(rawData[0]).filter(
+                    (header) => !header.includes("__EMPTY") && header !== "_id" && header !== "__v"
+                );
+
+                setHeaders(validHeaders);
+                setData(rawData);
+            } else {
+                setError("No data available.");
+            }
+        } catch (err) {
+            console.error("❌ Fetch error:", err);
+            setError("Failed to load data.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    /** 
+     * Handle Cell Edit and Auto-Save 
+     */
+    const handleEdit = async (rowIndex, field, value) => {
+        const updatedData = [...data];
+        updatedData[rowIndex][field] = value;
+        setData(updatedData); // Update UI instantly
+
+        try {
+            await axios.put("/api/research", {
+                id: updatedData[rowIndex]._id,
+                updatedData: { [field]: value },
+            });
+            console.log("✅ Field updated successfully:", field, value);
+        } catch (error) {
+            console.error("❌ Update error:", error);
+        }
+    };
+
+    /**
+     * Download Excel File with Updated Data
+     */
+    const downloadExcel = () => {
+        if (data.length === 0) {
+            alert("No data available to download!");
+            return;
+        }
+
+        const worksheet = XLSX.utils.json_to_sheet(data.map(row => {
+            const newRow = {};
+            headers.forEach(header => {
+                newRow[header] = row[header] || "-"; // Include only required headers
+            });
+            return newRow;
+        }));
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Vendor_KPI_Testimonials");
+
+        // Generate Excel File and Download
+        XLSX.writeFile(workbook, "Vendor_KPI_Testimonials.xlsx");
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-100 p-6 flex flex-col items-center">
+            <UploadPage />
+
+            <div className="max-w-6xl w-full bg-white shadow-lg rounded-lg p-6">
+                <h1 className="text-3xl font-semibold text-center mb-6">Vendor KPI Testimonials</h1>
+
+                {/* Display loading or error messages */}
+                {loading && <p>Loading data...</p>}
+                {error && <p className="text-red-600">{error}</p>}
+
+                {/* Download Button */}
+                <button 
+                    onClick={downloadExcel}
+                    className="mb-4 px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
+                >
+                    📥 Download Excel
+                </button>
+
+                {/* Search Input */}
+                <input 
+                    type="text" 
+                    placeholder="Search..." 
+                    className="w-full p-2 border mt-4 rounded"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+
+                {/* Editable Table */}
+                {data.length > 0 ? (
+                    <div className="overflow-x-auto mt-6">
+                        <table className="min-w-full bg-white border shadow-md rounded-lg">
+                            <thead className="bg-blue-600 text-white">
+                                <tr>
+                                    {headers.map((header, index) => (
+                                        <th key={index} className="py-2 px-4 border">{header}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.filter(row =>
+                                    JSON.stringify(row).toLowerCase().includes(searchQuery.toLowerCase())
+                                ).map((row, rowIndex) => (
+                                    <tr key={rowIndex}>
+                                        {headers.map((header, colIndex) => (
+                                            <td 
+                                                key={colIndex} 
+                                                className="py-2 px-4 border"
+                                                contentEditable
+                                                suppressContentEditableWarning
+                                                onBlur={(e) => handleEdit(rowIndex, header, e.target.innerText)}
+                                            >
+                                                {row[header] || "-"}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <p className="text-gray-600 mt-4">No data found.</p>
+                )}
+            </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    );
 }
