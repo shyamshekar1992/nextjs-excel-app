@@ -4,7 +4,7 @@ import { useDropzone } from "react-dropzone";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
-export default function UploadPage() {
+export default function VendorUpload() {
     const [file, setFile] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -36,7 +36,7 @@ export default function UploadPage() {
         formData.append("file", file);
 
         try {
-            const response = await axios.post("/api/upload", formData, {
+            const response = await axios.post("/api/uploadvendor", formData, {
                 onUploadProgress: (progressEvent) => {
                     const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                     setUploadProgress(percentCompleted);
@@ -58,6 +58,7 @@ export default function UploadPage() {
     };
 
     return (
+        // <div className="min-h-screen bg-gray-100 p-6 flex flex-col items-center">
             <div className="max-w-4xl w-full bg-white shadow-lg rounded-lg p-6">
                 <h1 className="text-3xl font-semibold text-center text-gray-800 mb-6">
                     Upload Vendor KPI Testimonials
@@ -114,5 +115,6 @@ export default function UploadPage() {
                     View Data
                 </button>
             </div>
+        // </div>
     );
 }

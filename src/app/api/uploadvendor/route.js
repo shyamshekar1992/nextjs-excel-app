@@ -20,9 +20,9 @@ export async function POST(req) {
         const workbook = XLSX.read(new Uint8Array(buffer), { type: "array" });
 
         // Find only "Vendor KPI Testimonials" sheet
-        const sheetName = workbook.SheetNames.find(name => name.includes("Vendor KPI Testimonials"));
+        const sheetName = workbook.SheetNames.find(name => name.includes("Vendor Contacts"));
         if (!sheetName) {
-            return NextResponse.json({ error: "Sheet 'Vendor KPI Testimonials' not found" }, { status: 400 });
+            return NextResponse.json({ error: "'Vendors contacts not found not found" }, { status: 400 });
         }
 
         const sheet = workbook.Sheets[sheetName];
@@ -40,7 +40,7 @@ export async function POST(req) {
         // **Transform data into MongoDB-friendly JSON format**
         const jsonData = rawData.slice(1)
             .map(row => {
-                let obj = { Category: "Vendor KPI Testimonials" }; // Add category field
+                let obj = { Category: "Vendor Contacts" }; // Add category field
                 row.forEach((cell, index) => {
                     if (headers[index]) obj[headers[index]] = cell || null; // Keep null instead of "-"
                 });
