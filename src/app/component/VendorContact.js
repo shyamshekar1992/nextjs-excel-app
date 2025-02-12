@@ -36,7 +36,7 @@ export default function VendorUpload() {
         formData.append("file", file);
 
         try {
-            const response = await axios.post("/api/uploadvendorcontact", formData, {
+            const response = await axios.post("/api/uploadvendor", formData, {
                 onUploadProgress: (progressEvent) => {
                     const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                     setUploadProgress(percentCompleted);

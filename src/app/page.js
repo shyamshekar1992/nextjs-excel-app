@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import UploadPage from "./component/Upload";
 import * as XLSX from "xlsx"; // Import xlsx library
+import Pagination from "./component/Pagination";
 
 export default function Home() {
     const [data, setData] = useState([]);
@@ -90,7 +91,7 @@ export default function Home() {
     };
 
     return (
-      <><div className="min-h-screen bg-gray-100 p-4 flex flex-col items-center">
+      <><Pagination /><><div className="min-h-screen bg-gray-100 p-4 flex flex-col items-center">
         <UploadPage />
         <div className="max-w-6xl w-full bg-white shadow-lg rounded-lg p-6 mt-2">
           <h1 className="text-3xl font-semibold text-center mb-4">Vendor KPI Testimonials</h1>
@@ -104,8 +105,7 @@ export default function Home() {
               placeholder="Search..."
               className="w-full md:w-1/2 p-2 border rounded"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+              onChange={(e) => setSearchQuery(e.target.value)} />
             <button
               onClick={downloadExcel}
               className="mt-2 md:mt-0 px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
@@ -148,6 +148,6 @@ export default function Home() {
             <p className="text-gray-600 mt-4">No data found.</p>
           )}
         </div>
-      </div></>
+      </div></></>
     );
 }
