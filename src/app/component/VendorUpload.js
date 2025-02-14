@@ -59,7 +59,7 @@ export default function VendorUpload() {
 
     return (
         // <div className="min-h-screen bg-gray-100 p-6 flex flex-col items-center">
-            <div className="max-w-4xl w-full bg-white shadow-lg rounded-lg p-6">
+            <div className="w-full bg-white text-center shadow-lg rounded-lg p-6">
                 <h1 className="text-3xl font-semibold text-center text-gray-800 mb-6">
                     Upload Vendor KPI Testimonials
                 </h1>
@@ -108,12 +108,12 @@ export default function VendorUpload() {
                 )}
 
                 {/* Go Back Button */}
-                <button 
+                {/* <button 
                     onClick={() => router.push("/")} 
                     className="mt-4 px-4 py-2 rounded bg-gray-500 text-white hover:bg-gray-600"
                 >
                     View Data
-                </button>
+                </button> */}
             </div>
         // </div>
     );
